@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f2a1d">
+<title>Skor Tahmin</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap">
+<style>
+:root{--bg:#f3f6f1;--sf:#fff;--ink:#12261a;--mut:#5d7366;--line:#d5ded7;--acc:#b8780a;--accbg:#fbefd5;--bar:#2f7a4f;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f2a1d;--sf:#16382a;--ink:#e8efe6;--mut:#93ab9b;--line:#2c5240;--acc:#f2b84b;--accbg:#3a3318;--bar:#58b97f;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f2a1d;--sf:#16382a;--ink:#e8efe6;--mut:#93ab9b;--line:#2c5240;--acc:#f2b84b;--accbg:#3a3318;--bar:#58b97f;color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:500 16px/1.45 Barlow,system-ui,sans-serif;max-width:560px;margin:0 auto;padding:12px 14px 40px}
+h1,h2,.num{font-family:"Barlow Condensed","Arial Narrow",sans-serif;margin:0}
+h1{font-size:26px;letter-spacing:.5px}
+h2{font-size:20px;margin:18px 0 8px}
+nav{display:flex;gap:6px;margin:10px 0 14px;border-bottom:1px solid var(--line)}
+nav button{flex:1;background:none;border:0;color:var(--mut);font:700 18px "Barlow Condensed",sans-serif;padding:10px 0;border-bottom:3px solid transparent;cursor:pointer}
+nav button.on{color:var(--ink);border-color:var(--acc)}
+.card{background:var(--sf);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:12px}
+label{display:block;font-size:13px;color:var(--mut);margin-bottom:3px}
+input,select,textarea{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+.row{display:flex;gap:8px;align-items:end}.row>*{flex:1}
+.vs{flex:0 0 auto;padding-bottom:10px;color:var(--mut)}
+.btn{background:var(--acc);color:#1a1405;border:0;border-radius:8px;padding:12px;font:700 18px "Barlow Condensed",sans-serif;width:100%;cursor:pointer;margin-top:10px}
+.btn.alt{background:none;color:var(--ink);border:1px solid var(--line)}
+.score{text-align:center;padding:18px 8px;border:2px solid var(--line);border-radius:10px;position:relative}
+.score:before{content:"";position:absolute;left:50%;top:0;bottom:0;border-left:1px dashed var(--line)}
+.score .num{font-size:76px;line-height:1;font-weight:700;position:relative;background:var(--sf);display:inline-block;padding:0 14px}
+.names{display:flex;justify-content:space-between;font-weight:600;margin-top:6px;gap:10px}
+.names span{flex:1}.names span:last-child{text-align:right}
+.bars{margin:8px 0}.bars div.b{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:15px}
+.bars .t{flex:0 0 88px;color:var(--mut)}.bars .tr{flex:1;height:12px;background:var(--bg);border-radius:6px;overflow:hidden}
+.bars .f{height:100%;background:var(--bar)}.bars .p{flex:0 0 46px;text-align:right;font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:6px}.chip{background:var(--accbg);border-radius:14px;padding:4px 10px;font-size:14px}
+.chip b{font-family:"Barlow Condensed",sans-serif;font-size:17px}
+.m{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);font-size:15px}
+.m:last-child{border:0}.m .s{font:700 18px "Barlow Condensed",sans-serif;min-width:42px;text-align:center}
+.m .n{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.m button{background:none;border:0;color:var(--mut);font-size:20px;cursor:pointer;padding:0 6px}
+.note{color:var(--mut);font-size:13px}
+.form{display:inline-flex;gap:3px;vertical-align:middle}.form i{width:16px;height:16px;border-radius:3px;font:700 11px/16px Barlow;text-align:center;font-style:normal;color:#fff}
+.W{background:#2f7a4f}.D{background:#8a8f8c}.L{background:#b5483d}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<h1>Skor Tahmin</h1>
+<p class="note" style="margin:2px 0 0">Eski maçlardan Poisson modeliyle skor tahmini</p>
+<nav><button id="t1" class="on">Tahmin</button><button id="t2">Maçlar</button></nav>
+
+<section id="p1">
+  <div class="card">
+    <label for="lg">Lig</label>
+    <div class="row"><select id="lg"><option value="4339">Süper Lig</option><option value="4328">Premier Lig</option><option value="4335">La Liga</option><option value="4331">Bundesliga</option><option value="4332">Serie A</option><option value="4334">Ligue 1</option></select>
+    <button class="btn alt" id="fetch" style="margin:0;flex:0 0 auto;width:auto;padding:10px 14px">Maçları çek</button></div>
+    <p class="note" id="fst" style="margin:8px 0 0">Güncel sonuçları internetten çeker.</p>
+  </div>
+  <div class="card">
+    <div class="row">
+      <div><label for="home">Ev sahibi</label><select id="home"></select></div>
+      <span class="vs">–</span>
+      <div><label for="away">Deplasman</label><select id="away"></select></div>
+    </div>
+    <button class="btn" id="go">Skoru tahmin et</button>
+  </div>
+  <div id="out"></div>
+</section>
+
+<section id="p2" class="hidden">
+  <div class="card">
+    <label for="bulk">Maçları yapıştır (her satır: Takım A 2-1 Takım B; eskiden yeniye)</label>
+    <textarea id="bulk" rows="4" placeholder="Galatasaray 2-1 Fenerbahçe&#10;Beşiktaş 0-0 Trabzonspor"></textarea>
+    <button class="btn" id="imp">Maçları ekle</button>
+    <p class="note" id="impmsg"></p>
+  </div>
+  <div class="card">
+    <div class="row">
+      <div><label for="mh">Ev</label><input id="mh" list="tl" placeholder="Takım"></div>
+      <div style="flex:0 0 52px"><label for="mhg">Gol</label><input id="mhg" type="number" min="0" inputmode="numeric"></div>
+      <div style="flex:0 0 52px"><label for="mag">Gol</label><input id="mag" type="number" min="0" inputmode="numeric"></div>
+      <div><label for="ma">Deplasman</label><input id="ma" list="tl" placeholder="Takım"></div>
+    </div>
+    <datalist id="tl"></datalist>
+    <button class="btn alt" id="add">Tek maç ekle</button>
+  </div>
+  <h2 id="cnt"></h2>
+  <div class="card" id="list"></div>
+  <button class="btn alt" id="clr">Tüm maçları sil</button>
+</section>
+
+<script>
+(function(){
+var KEY="skor-tahmin-v1",M=[];
+var SAMPLE="Galatasaray 2-1 Fenerbahçe\nBeşiktaş 1-1 Trabzonspor\nFenerbahçe 3-0 Beşiktaş\nTrabzonspor 0-2 Galatasaray\nGalatasaray 4-1 Beşiktaş\nFenerbahçe 2-2 Trabzonspor\nBeşiktaş 0-1 Galatasaray\nTrabzonspor 1-0 Fenerbahçe\nGalatasaray 3-1 Trabzonspor\nFenerbahçe 1-1 Galatasaray\nTrabzonspor 2-2 Beşiktaş\nBeşiktaş 1-3 Fenerbahçe";
+function $(i){return document.getElementById(i)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function load(){try{var r=localStorage.getItem(KEY);if(r){M=JSON.parse(r);return}}catch(e){}M=parse(SAMPLE).list}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(M))}catch(e){}}
+function parse(txt){var list=[],bad=0;txt.split(/\n/).forEach(function(l){l=l.trim();if(!l)return;var m=l.match(/^(.+?)\s+(\d+)\s*[-:–]\s*(\d+)\s+(.+)$/);if(m)list.push({h:m[1].trim(),a:m[4].trim(),hg:+m[2],ag:+m[3]});else bad++});return{list:list,bad:bad}}
+function teams(){var s={};M.forEach(function(m){s[m.h]=1;s[m.a]=1});return Object.keys(s).sort(function(a,b){return a.localeCompare(b,"tr")})}
+
+/* ---- Model: ağırlıklı Poisson (hücum/savunma gücü + ev avantajı) ---- */
+var HL=12,K=2,MAXG=8;
+function fact(n){var r=1;for(var i=2;i<=n;i++)r*=i;return r}
+function pois(l,k){return Math.exp(-l)*Math.pow(l,k)/fact(k)}
+function predict(h,a){
+  var n=M.length,sw=0,sh=0,sa=0,st={},mpr=Math.max(teams().length/2,1);
+  M.forEach(function(m,i){var w=Math.pow(.5,(n-1-i)/(mpr*HL));sw+=w;sh+=w*m.hg;sa+=w*m.ag;
+    [[m.h,m.hg,m.ag],[m.a,m.ag,m.hg]].forEach(function(x){var t=st[x[0]]||(st[x[0]]={f:0,c:0,w:0});t.f+=w*x[1];t.c+=w*x[2];t.w+=w})});
+  var avgH=sh/sw,avgA=sa/sw,base=(avgH+avgA)/2,adv=Math.sqrt(avgH/Math.max(avgA,.01));
+  function str(t){var s=st[t]||{f:0,c:0,w:0};return{att:((s.f+K*base)/(s.w+K))/base,def:((s.c+K*base)/(s.w+K))/base}}
+  var H=str(h),A=str(a);
+  var lh=base*H.att*A.def*adv,la=base*A.att*H.def/adv;
+  var g=[],pw=0,pd=0,pl=0,ov=0,bt=0,best={p:0};
+  for(var i=0;i<=MAXG;i++){g[i]=[];for(var j=0;j<=MAXG;j++){var p=pois(lh,i)*pois(la,j);g[i][j]=p;
+    if(i>j)pw+=p;else if(i==j)pd+=p;else pl+=p;if(i+j>2)ov+=p;if(i>0&&j>0)bt+=p;if(p>best.p)best={p:p,i:i,j:j}}}
+  var tot=pw+pd+pl;
+  var all=[];for(i=0;i<=MAXG;i++)for(j=0;j<=MAXG;j++)all.push({i:i,j:j,p:g[i][j]/tot});
+  all.sort(function(x,y){return y.p-x.p});
+  return{lh:lh,la:la,w:pw/tot,d:pd/tot,l:pl/tot,ov:ov/tot,bt:bt/tot,best:best,top:all.slice(0,5)}
+}
+function formOf(t){var r=[];for(var i=M.length-1;i>=0&&r.length<5;i--){var m=M[i];if(m.h!==t&&m.a!==t)continue;var f=m.h===t?m.hg:m.ag,c=m.h===t?m.ag:m.hg;r.push(f>c?"W":f==c?"D":"L")}
+  var tr={W:"G",D:"B",L:"M"};return'<span class="form">'+r.map(function(x){return'<i class="'+x+'">'+tr[x]+'</i>'}).join("")+'</span>'}
+function pct(x){return Math.round(x*100)}
+function bar(t,p){return'<div class="b"><span class="t">'+t+'</span><span class="tr"><span class="f" style="display:block;width:'+pct(p)+'%"></span></span><span class="p">%'+pct(p)+'</span></div>'}
+
+function render(){
+  var T=teams(),opts=T.map(function(t){return'<option>'+esc(t)+'</option>'}).join("");
+  var h=$("home").value,a=$("away").value;
+  $("home").innerHTML=opts;$("away").innerHTML=opts;
+  if(T.indexOf(h)>-1)$("home").value=h;
+  if(T.indexOf(a)>-1)$("away").value=a;else if(T.length>1)$("away").selectedIndex=1;
+  $("tl").innerHTML=opts;
+  $("cnt").textContent=M.length+" maç kayıtlı";
+  $("list").innerHTML=M.length?M.slice().reverse().map(function(m,k){var idx=M.length-1-k;
+    return'<div class="m"><span class="n">'+esc(m.h)+'</span><span class="s">'+m.hg+' – '+m.ag+'</span><span class="n" style="text-align:right">'+esc(m.a)+'</span><button data-i="'+idx+'" aria-label="Sil">×</button></div>'}).join(""):'<span class="note">Henüz maç yok. Yukarıdan ekle.</span>';
+}
+function run(){
+  var h=$("home").value,a=$("away").value,o=$("out");
+  if(!h||!a||h===a){o.innerHTML='<div class="card note">İki farklı takım seç.</div>';return}
+  if(M.length<4){o.innerHTML='<div class="card note">Tahmin için en az 4 maç gir.</div>';return}
+  var r=predict(h,a);
+  o.innerHTML='<div class="card"><div class="score"><span class="num">'+r.best.i+' – '+r.best.j+'</span></div>'
+   +'<div class="names"><span>'+esc(h)+'</span><span>'+esc(a)+'</span></div>'
+   +'<p class="note">En olası skor (olasılık %'+(r.best.p*100).toFixed(1)+'). Beklenen gol: '+r.lh.toFixed(2)+' – '+r.la.toFixed(2)+'</p>'
+   +'<div class="bars">'+bar("Ev sahibi",r.w)+bar("Beraberlik",r.d)+bar("Deplasman",r.l)+'</div>'
+   +'<div class="bars">'+bar("2,5 üst",r.ov)+bar("KG var",r.bt)+'</div></div>'
+   +'<div class="card"><label>Diğer olası skorlar</label><div class="chips">'
+   +r.top.map(function(s){return'<span class="chip"><b>'+s.i+'–'+s.j+'</b> %'+(s.p*100).toFixed(1)+'</span>'}).join("")+'</div>'
+   +'<p style="margin:14px 0 4px">'+esc(h)+' son form: '+formOf(h)+'</p><p style="margin:0">'+esc(a)+' son form: '+formOf(a)+'</p></div>'
+   +'<p class="note">Model son maçlara daha çok ağırlık verir. Sakatlık, hakem, motivasyon gibi etkenleri bilmez; tahminler kesin sonuç değildir.</p>';
+}
+function tab(n){$("p1").classList.toggle("hidden",n!==1);$("p2").classList.toggle("hidden",n!==2);$("t1").classList.toggle("on",n===1);$("t2").classList.toggle("on",n===2)}
+$("t1").onclick=function(){tab(1)};$("t2").onclick=function(){tab(2)};
+$("go").onclick=run;
+$("imp").onclick=function(){var r=parse($("bulk").value);M=M.concat(r.list);save();render();$("bulk").value="";
+  $("impmsg").textContent=r.list.length+" maç eklendi"+(r.bad?", "+r.bad+" satır okunamadı (biçim: Takım A 2-1 Takım B)":"")+"."};
+$("add").onclick=function(){var h=$("mh").value.trim(),a=$("ma").value.trim(),x=$("mhg").value,y=$("mag").value;
+  if(!h||!a||h===a||x===""||y==="")return;M.push({h:h,a:a,hg:+x,ag:+y});save();render();$("mh").value=$("ma").value=$("mhg").value=$("mag").value=""};
+$("list").onclick=function(e){var i=e.target.getAttribute&&e.target.getAttribute("data-i");if(i===null||i===undefined)return;M.splice(+i,1);save();render()};
+$("clr").onclick=function(){if(confirm("Tüm maçlar silinsin mi?")){M=[];save();render();$("out").innerHTML=""}};
+var API="https://www.thesportsdb.com/api/v1/json/123/";
+function seasons(){var d=new Date(),y=d.getFullYear(),s=d.getMonth()>=6?y:y-1;return[(s-1)+"-"+s,s+"-"+(s+1)]}
+function getJson(u){return fetch(u).then(function(r){if(!r.ok)throw new Error(r.status);return r.json()}).catch(function(){return null})}
+$("fetch").onclick=function(){
+  var id=$("lg").value,st=$("fst"),b=$("fetch");
+  st.textContent="Maçlar çekiliyor…";b.disabled=true;
+  var urls=seasons().map(function(s){return API+"eventsseason.php?id="+id+"&s="+s}).concat([API+"eventspastleague.php?id="+id]);
+  Promise.all(urls.map(getJson)).then(function(res){
+    b.disabled=false;
+    if(res.every(function(r){return r===null})){st.textContent="Bağlantı kurulamadı. İnternetini kontrol et; bu özellik claude.ai önizlemesinde değil, APK’da veya kendi sunucunda çalışır.";return}
+    var seen={},ev=[];
+    res.forEach(function(r){if(r&&r.events)r.events.forEach(function(e){
+      if(seen[e.idEvent])return;seen[e.idEvent]=1;
+      if(e.intHomeScore==null||e.intAwayScore==null||e.intHomeScore===""||e.intAwayScore==="")return;
+      ev.push(e)})});
+    if(!ev.length){st.textContent="Bu lig için oynanmış maç bulunamadı.";return}
+    ev.sort(function(x,y){return((x.dateEvent||"")+(x.strTime||"")).localeCompare((y.dateEvent||"")+(y.strTime||""))});
+    M=ev.map(function(e){return{h:e.strHomeTeam,a:e.strAwayTeam,hg:+e.intHomeScore,ag:+e.intAwayScore}});
+    save();render();$("out").innerHTML="";
+    var last=ev[ev.length-1];
+    st.textContent=M.length+" maç yüklendi. Son maç: "+last.dateEvent+".";
+  });
+};
+load();render();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+{
+  "appId": "com.onur.skortahmin",
+  "appName": "Skor Tahmin",
+  "webDir": "www",
+  "plugins": { "CapacitorHttp": { "enabled": true } }
+}
